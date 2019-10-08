@@ -1,5 +1,7 @@
 package com.moustafa.mymediahub.features.imagegallerylistscreen
 
+import android.content.Context
+import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,24 +9,44 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.ListPreloader
+import com.bumptech.glide.Priority
+import com.bumptech.glide.RequestBuilder
 import com.moustafa.mymediahub.R
 import com.moustafa.mymediahub.models.PhotoInfo
 import kotlinx.android.synthetic.main.item_gallery_image.view.*
+
 
 /**
  * @author moustafasamhoury
  * created on Wednesday, 18 Sep, 2019
  */
 
-class ImageGalleryListAdapter :
-    ListAdapter<PhotoInfo, ReposListViewHolder>(
-        PHOTO_INFO_COMPARATOR
-    ) {
+class ImageGalleryListAdapter(val context: Context) :
+    ListAdapter<PhotoInfo, ReposListViewHolder>(PHOTO_INFO_COMPARATOR),
+    ListPreloader.PreloadModelProvider<PhotoInfo> {
+
+    private val fullRequest by lazy {
+        Glide.with(context).asDrawable()
+    }
+
+
+    private val thumbnailRequest by lazy {
+        Glide.with(context).asDrawable()
+            .override(context.resources.getDimensionPixelSize(R.dimen.grid_photo_side))
+    }
+
+    private val preloadRequest by lazy {
+        fullRequest.clone().priority(Priority.HIGH)
+    }
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReposListViewHolder =
         ReposListViewHolder(
             LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_gallery_image, parent, false)
+                .inflate(R.layout.item_gallery_image, parent, false),
+            fullRequest,
+            thumbnailRequest
         )
 
     override fun onBindViewHolder(holder: ReposListViewHolder, position: Int) =
@@ -42,16 +64,27 @@ class ImageGalleryListAdapter :
                 override fun getChangePayload(oldItem: PhotoInfo, newItem: PhotoInfo): Any = Any()
             }
     }
+
+    override fun getPreloadItems(position: Int): MutableList<PhotoInfo> =
+        currentList.subList(position, position + 1)
+
+    override fun getPreloadRequestBuilder(item: PhotoInfo): RequestBuilder<*>? {
+        return preloadRequest.load(item)
+    }
 }
 
-class ReposListViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+public class ReposListViewHolder(
+    itemView: View,
+    val fullRequest: RequestBuilder<Drawable>,
+    val thumbnailRequest: RequestBuilder<Drawable>
+) : RecyclerView.ViewHolder(itemView) {
 
     fun bind(photoInfo: PhotoInfo?) {
+
         if (photoInfo != null) {
-            Glide
-                .with(itemView.imageViewPhoto)
+            fullRequest
                 .load(photoInfo.imageUrl)
-                .fitCenter()
+                .thumbnail(thumbnailRequest.load(photoInfo.imageUrl))
                 .into(itemView.imageViewPhoto)
         }
     }

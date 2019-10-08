@@ -64,6 +64,10 @@ dependencies {
 
     implementation 'com.github.bumptech.glide:glide:4.9.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.9.0'
+    compile ("com.github.bumptech.glide:recyclerview-integration:4.9.0") {
+        // Excludes the support library because it's already included by Glide.
+        transitive = false
+    }
 
     implementation "androidx.navigation:navigation-fragment-ktx:2.1.0"
     implementation "androidx.navigation:navigation-ui-ktx:2.1.0"

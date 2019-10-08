@@ -1,16 +1,24 @@
 package com.moustafa.mymediahub.features.imagegallerylistscreen
 
+import android.graphics.Rect
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
+import com.bumptech.glide.util.FixedPreloadSizeProvider
 import com.google.android.material.snackbar.Snackbar
 import com.moustafa.mymediahub.R
 import com.moustafa.mymediahub.base.BaseFragment
 import com.moustafa.mymediahub.models.PhotoInfo
 import com.moustafa.mymediahub.repository.network.StateMonitor
+import com.moustafa.mymediahub.utils.Constants
 import kotlinx.android.synthetic.main.fragment_my_hub_gallery.*
+import kotlinx.android.synthetic.main.item_gallery_image.view.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
+
 
 /**
  * @author moustafasamhoury
@@ -21,12 +29,48 @@ class MyHubGalleryFragment : BaseFragment(R.layout.fragment_my_hub_gallery) {
 
     private val myHubGalleryViewModel: MyHubGalleryViewModel by viewModel()
 
-    private val imageGalleryListAdapter: ImageGalleryListAdapter = ImageGalleryListAdapter()
+    private val imageGalleryListAdapter: ImageGalleryListAdapter by lazy {
+        ImageGalleryListAdapter(context!!)
+    }
 
     override fun setupViews(rootView: View) {
-        recyclerViewImagesList.layoutManager =
-            StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+        configureRecyclerView()
+    }
 
+    private fun configureRecyclerView() {
+        val photoSize = resources.getDimensionPixelOffset(R.dimen.grid_photo_side)
+        val preloadSize = Constants.PRELOADED_ITEMS_NUMBER
+        val gridMargin = resources.getDimensionPixelOffset(R.dimen.grid_margin_value)
+        val spanCount = resources.displayMetrics.widthPixels / (photoSize + 2 * gridMargin)
+
+        val gridLayoutManager =
+            GridLayoutManager(context, spanCount)
+        recyclerViewImagesList.layoutManager = gridLayoutManager
+        recyclerViewImagesList.addItemDecoration(object : RecyclerView.ItemDecoration() {
+            override fun getItemOffsets(
+                outRect: Rect, view: View, parent: RecyclerView,
+                state: RecyclerView.State
+            ) {
+                outRect.set(gridMargin, gridMargin, gridMargin, gridMargin)
+            }
+        })
+
+        recyclerViewImagesList.setRecyclerListener { holder ->
+            val photoViewHolder = holder as ReposListViewHolder
+            Glide.with(context!!).clear(photoViewHolder.itemView.imageViewPhoto)
+        }
+        val heightCount = resources.displayMetrics.heightPixels / photoSize
+
+        recyclerViewImagesList.recycledViewPool.setMaxRecycledViews(0, 4 * heightCount * 2)
+        recyclerViewImagesList.setItemViewCacheSize(0)
+
+
+        val preloadSizeProvider = FixedPreloadSizeProvider<PhotoInfo>(200, 200)
+        val preloader = RecyclerViewPreloader(
+            Glide.with(this), imageGalleryListAdapter,
+            preloadSizeProvider, preloadSize
+        )
+        recyclerViewImagesList.addOnScrollListener(preloader)
         recyclerViewImagesList.adapter = imageGalleryListAdapter
     }
 
