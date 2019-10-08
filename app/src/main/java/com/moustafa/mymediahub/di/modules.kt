@@ -1,10 +1,12 @@
 package com.moustafa.mymediahub.di
 
 import com.moustafa.mymediahub.BuildConfig
+import com.moustafa.mymediahub.features.imagegallerylistscreen.MyHubGalleryViewModel
 import com.moustafa.mymediahub.repository.Repository
 import com.moustafa.mymediahub.repository.network.MyMediaHubService
 import com.moustafa.mymediahub.repository.network.NetworkLayerUtils
 import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -25,4 +27,10 @@ val repositoryModule: Module = module {
             )
     }
     single<Repository> { Repository(get()) }
+}
+
+val viewModelsModule = module {
+    viewModel {
+        MyHubGalleryViewModel(repository = get())
+    }
 }

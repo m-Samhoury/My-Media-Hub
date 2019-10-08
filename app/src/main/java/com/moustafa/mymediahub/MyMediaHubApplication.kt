@@ -2,6 +2,7 @@ package com.moustafa.mymediahub
 
 import android.app.Application
 import com.moustafa.mymediahub.di.repositoryModule
+import com.moustafa.mymediahub.di.viewModelsModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidFileProperties
 import org.koin.android.ext.koin.androidLogger
@@ -25,7 +26,7 @@ class MyMediaHubApplication : Application() {
             }
             androidFileProperties()
 
-            modules(listOf(repositoryModule))
+            modules(listOf(repositoryModule, viewModelsModule))
         }
     }
 }
