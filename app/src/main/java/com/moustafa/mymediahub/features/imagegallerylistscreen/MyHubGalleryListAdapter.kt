@@ -37,7 +37,7 @@ class ImageGalleryListAdapter :
                     oldItem == newItem
 
                 override fun areItemsTheSame(oldItem: PhotoInfo, newItem: PhotoInfo): Boolean =
-                    oldItem.id == newItem.id
+                    oldItem.imageUrl == newItem.imageUrl
 
                 override fun getChangePayload(oldItem: PhotoInfo, newItem: PhotoInfo): Any = Any()
             }
@@ -50,7 +50,7 @@ class ReposListViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         if (photoInfo != null) {
             Glide
                 .with(itemView.imageViewPhoto)
-                .load(photoInfo.id)
+                .load(photoInfo.imageUrl)
                 .fitCenter()
                 .into(itemView.imageViewPhoto)
         }

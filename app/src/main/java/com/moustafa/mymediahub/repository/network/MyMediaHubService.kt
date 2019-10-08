@@ -1,5 +1,9 @@
 package com.moustafa.mymediahub.repository.network
 
+import com.moustafa.mymediahub.models.PhotoInfoListResponse
+import retrofit2.Response
+import retrofit2.http.GET
+
 /**
  *
  * This is the service that will include all the network calls to
@@ -11,4 +15,6 @@ package com.moustafa.mymediahub.repository.network
 
 interface MyMediaHubService {
 
+    @GET("uploads")
+    suspend fun fetchImagesList(): Response<PhotoInfoListResponse>
 }
