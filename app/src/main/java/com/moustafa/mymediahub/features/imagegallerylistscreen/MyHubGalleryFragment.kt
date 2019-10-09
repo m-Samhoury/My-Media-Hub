@@ -1,10 +1,15 @@
 package com.moustafa.mymediahub.features.imagegallerylistscreen
 
+import android.app.Activity
+import android.content.Intent
+import android.graphics.Color
 import android.graphics.Rect
+import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -18,14 +23,15 @@ import com.moustafa.mymediahub.base.BaseFragment
 import com.moustafa.mymediahub.models.PhotoInfo
 import com.moustafa.mymediahub.repository.network.StateMonitor
 import com.moustafa.mymediahub.utils.Constants
-import com.vansuita.pickimage.bean.PickResult
 import com.vansuita.pickimage.bundle.PickSetup
 import com.vansuita.pickimage.dialog.PickImageDialog
+import com.yalantis.ucrop.UCrop
 import kotlinx.android.synthetic.main.fragment_my_hub_gallery.*
 import kotlinx.android.synthetic.main.item_gallery_image.view.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.io.File
 
 
 /**
@@ -49,21 +55,36 @@ class MyHubGalleryFragment : BaseFragment(R.layout.fragment_my_hub_gallery) {
     }
 
     private fun pickImage() {
+
+
         PickImageDialog.build(
             PickSetup()
                 .setButtonOrientation(LinearLayout.HORIZONTAL)
                 .setIconGravity(Gravity.TOP)
         )
             .setOnPickResult { result ->
-                compressImageAndUpload(result)
-
+                cropImage(result.uri)
             }
             .setOnPickCancel {}.show(activity)
     }
 
-    private fun compressImageAndUpload(result: PickResult) {
+    private fun cropImage(sourceUri: Uri) {
+        val destinationUri = Uri.fromFile(File(context?.cacheDir, "croppedtemp"))
+        val options = UCrop.Options()
+        options.setToolbarColor(ContextCompat.getColor(context!!, R.color.colorPrimary))
+        options.setStatusBarColor(ContextCompat.getColor(context!!, R.color.colorPrimaryDark))
+        options.setActiveWidgetColor(ContextCompat.getColor(context!!, R.color.colorPrimary))
+        options.setCropGridColor(ContextCompat.getColor(context!!, R.color.colorPrimary))
+        options.setToolbarWidgetColor(Color.WHITE)
+
+        UCrop.of(sourceUri, destinationUri)
+            .withOptions(options)
+            .start(context!!, this)
+    }
+
+    private fun compressImageAndUpload(result: Uri) {
         myHubGalleryViewModel.viewModelScope.launch(Dispatchers.Main) {
-            val compressedImage = myHubGalleryViewModel.compressImageAsync(context!!, result.uri)
+            val compressedImage = myHubGalleryViewModel.compressImageAsync(context!!, result)
             if (compressedImage != null) {
                 myHubGalleryViewModel.uploadImage(compressedImage)
             } else {
@@ -163,5 +184,19 @@ class MyHubGalleryFragment : BaseFragment(R.layout.fragment_my_hub_gallery) {
         } else {
             progressBarLoadingImages.hide()
         }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when (requestCode) {
+            UCrop.REQUEST_CROP -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    compressImageAndUpload(UCrop.getOutput(data)!!)
+                }
+            }
+            UCrop.RESULT_ERROR -> {
+                showError(Exception(getString(R.string.message_error_compressing_image)))
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data)
     }
 }
