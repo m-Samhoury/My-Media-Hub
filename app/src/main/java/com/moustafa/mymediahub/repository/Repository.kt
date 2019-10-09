@@ -3,7 +3,11 @@ package com.moustafa.mymediahub.repository
 import com.moustafa.mymediahub.models.PhotoInfo
 import com.moustafa.mymediahub.repository.network.MyMediaHubService
 import okhttp3.Headers
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.Response
+import java.io.File
 
 /**
  * This repository is our source of truth, we fetch all the data using this repository
@@ -15,13 +19,36 @@ import retrofit2.Response
 class Repository(private val service: MyMediaHubService) {
 
     suspend fun fetchHubImages(
-        onError: (Exception) -> Unit
+        onError: suspend (Exception) -> Unit
     ): List<PhotoInfo>? {
         val response = safeApiCall({
             service.fetchImagesList()
         }, onError)
+
         if (response != null) {
             return response.photos
+        }
+        return null
+    }
+
+    suspend fun uploadImage(
+        bitmap: File,
+        onError: suspend (Exception) -> Unit
+    ): Boolean? {
+        val response = safeApiCall({
+            val part = MultipartBody.Part.createFormData(
+                "hub",
+                "hub.png",
+                bitmap.asRequestBody("image/png".toMediaType())
+            )
+            service.uploadImage(part)
+        }, onError)
+        if (response != null) {
+            if (response.isSuccessful == true) {
+                return true
+            } else {
+                onError(Exception(response.message))
+            }
         }
 
         return null
@@ -31,7 +58,7 @@ class Repository(private val service: MyMediaHubService) {
 
 suspend fun <T : Any> Repository.safeApiCall(
     call: suspend () -> Response<T>,
-    onError: (Exception) -> Any
+    onError: suspend (Exception) -> Any
 ): T? {
     val result: Result<T> = safeApiResult(call)
     var data: T? = null

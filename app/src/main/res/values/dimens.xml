@@ -2,4 +2,5 @@
 <resources>
     <dimen name="grid_margin_value">4dp</dimen>
     <dimen name="grid_photo_side">120dp</dimen>
+    <dimen name="side_dimension_level_1">8dp</dimen>
 </resources>

@@ -2,7 +2,9 @@ package com.moustafa.mymediahub.features.imagegallerylistscreen
 
 import android.graphics.Rect
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
+import android.widget.LinearLayout
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -15,6 +17,8 @@ import com.moustafa.mymediahub.base.BaseFragment
 import com.moustafa.mymediahub.models.PhotoInfo
 import com.moustafa.mymediahub.repository.network.StateMonitor
 import com.moustafa.mymediahub.utils.Constants
+import com.vansuita.pickimage.bundle.PickSetup
+import com.vansuita.pickimage.dialog.PickImageDialog
 import kotlinx.android.synthetic.main.fragment_my_hub_gallery.*
 import kotlinx.android.synthetic.main.item_gallery_image.view.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -35,17 +39,36 @@ class MyHubGalleryFragment : BaseFragment(R.layout.fragment_my_hub_gallery) {
 
     override fun setupViews(rootView: View) {
         configureRecyclerView()
+        fabSubmitImage.setOnClickListener {
+            pickImage()
+        }
+    }
+
+    private fun pickImage() {
+        PickImageDialog.build(
+            PickSetup()
+                .setButtonOrientation(LinearLayout.HORIZONTAL)
+                .setIconGravity(Gravity.TOP)
+        )
+            .setOnPickResult { result ->
+                myHubGalleryViewModel.compressImageAndUpload(context!!, result.uri)
+            }
+            .setOnPickCancel {}.show(activity)
     }
 
     private fun configureRecyclerView() {
+        //efficient Recyclerview loading
+        // @Link{https://github.com/bumptech/glide/blob/e86fd41e16aac1b95884494c1097417b4ab15a5a/samples/flickr/src/main/java/com/bumptech/glide/samples/flickr/FlickrPhotoGrid.java#L78}
         val photoSize = resources.getDimensionPixelOffset(R.dimen.grid_photo_side)
-        val preloadSize = Constants.PRELOADED_ITEMS_NUMBER
         val gridMargin = resources.getDimensionPixelOffset(R.dimen.grid_margin_value)
         val spanCount = resources.displayMetrics.widthPixels / (photoSize + 2 * gridMargin)
+        val heightCount = resources.displayMetrics.heightPixels / photoSize
+        val itemsPerPage = spanCount * heightCount
+        val preloadSize = Constants.PRELOADED_ITEMS_NUMBER
 
-        val gridLayoutManager =
-            GridLayoutManager(context, spanCount)
+        val gridLayoutManager = GridLayoutManager(context, spanCount)
         recyclerViewImagesList.layoutManager = gridLayoutManager
+
         recyclerViewImagesList.addItemDecoration(object : RecyclerView.ItemDecoration() {
             override fun getItemOffsets(
                 outRect: Rect, view: View, parent: RecyclerView,
@@ -59,13 +82,12 @@ class MyHubGalleryFragment : BaseFragment(R.layout.fragment_my_hub_gallery) {
             val photoViewHolder = holder as ReposListViewHolder
             Glide.with(context!!).clear(photoViewHolder.itemView.imageViewPhoto)
         }
-        val heightCount = resources.displayMetrics.heightPixels / photoSize
 
-        recyclerViewImagesList.recycledViewPool.setMaxRecycledViews(0, 4 * heightCount * 2)
+        recyclerViewImagesList.recycledViewPool.setMaxRecycledViews(0, itemsPerPage * 2)
         recyclerViewImagesList.setItemViewCacheSize(0)
 
 
-        val preloadSizeProvider = FixedPreloadSizeProvider<PhotoInfo>(200, 200)
+        val preloadSizeProvider = FixedPreloadSizeProvider<PhotoInfo>(photoSize, photoSize)
         val preloader = RecyclerViewPreloader(
             Glide.with(this), imageGalleryListAdapter,
             preloadSizeProvider, preloadSize
@@ -126,5 +148,4 @@ class MyHubGalleryFragment : BaseFragment(R.layout.fragment_my_hub_gallery) {
             progressBarLoadingImages.hide()
         }
     }
-
 }
