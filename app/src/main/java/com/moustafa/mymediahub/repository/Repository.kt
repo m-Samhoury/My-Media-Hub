@@ -2,6 +2,7 @@ package com.moustafa.mymediahub.repository
 
 import com.moustafa.mymediahub.models.PhotoInfo
 import com.moustafa.mymediahub.repository.network.MyMediaHubService
+import com.moustafa.mymediahub.testing.OpenForTesting
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -16,6 +17,7 @@ import java.io.File
  * @author moustafasamhoury
  * created on Tuesday, 08 Oct, 2019
  */
+@OpenForTesting
 class Repository(private val service: MyMediaHubService) {
 
     suspend fun fetchHubImages(
