@@ -17,44 +17,10 @@ import java.io.File
  * @author moustafasamhoury
  * created on Tuesday, 08 Oct, 2019
  */
-@OpenForTesting
-class Repository(private val service: MyMediaHubService) {
+interface Repository {
 
-    suspend fun fetchHubImages(
-        onError: suspend (Exception) -> Unit
-    ): List<PhotoInfo>? {
-        val response = safeApiCall({
-            service.fetchImagesList()
-        }, onError)
-
-        if (response != null) {
-            return response.photos
-        }
-        return null
-    }
-
-    suspend fun uploadImage(
-        bitmap: File,
-        onError: suspend (Exception) -> Unit
-    ): Boolean? {
-        val response = safeApiCall({
-            val part = MultipartBody.Part.createFormData(
-                "hub",
-                "hub.png",
-                bitmap.asRequestBody("image/png".toMediaType())
-            )
-            service.uploadImage(part)
-        }, onError)
-        if (response != null) {
-            if (response.isSuccessful == true) {
-                return true
-            } else {
-                onError(Exception(response.message))
-            }
-        }
-
-        return null
-    }
+    suspend fun fetchHubImages(onError: suspend (Exception) -> Unit): List<PhotoInfo>?
+    suspend fun uploadImage(file: File, onError: suspend (Exception) -> Unit): Boolean?
 }
 // auxiliary helping functions
 

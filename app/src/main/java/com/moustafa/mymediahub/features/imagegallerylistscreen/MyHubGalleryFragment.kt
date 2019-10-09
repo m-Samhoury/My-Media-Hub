@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import androidx.lifecycle.Observer
+import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -17,10 +18,13 @@ import com.moustafa.mymediahub.base.BaseFragment
 import com.moustafa.mymediahub.models.PhotoInfo
 import com.moustafa.mymediahub.repository.network.StateMonitor
 import com.moustafa.mymediahub.utils.Constants
+import com.vansuita.pickimage.bean.PickResult
 import com.vansuita.pickimage.bundle.PickSetup
 import com.vansuita.pickimage.dialog.PickImageDialog
 import kotlinx.android.synthetic.main.fragment_my_hub_gallery.*
 import kotlinx.android.synthetic.main.item_gallery_image.view.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
@@ -51,9 +55,21 @@ class MyHubGalleryFragment : BaseFragment(R.layout.fragment_my_hub_gallery) {
                 .setIconGravity(Gravity.TOP)
         )
             .setOnPickResult { result ->
-                myHubGalleryViewModel.compressImageAndUpload(context!!, result.uri)
+                compressImageAndUpload(result)
+
             }
             .setOnPickCancel {}.show(activity)
+    }
+
+    private fun compressImageAndUpload(result: PickResult) {
+        myHubGalleryViewModel.viewModelScope.launch(Dispatchers.Main) {
+            val compressedImage = myHubGalleryViewModel.compressImageAsync(context!!, result.uri)
+            if (compressedImage != null) {
+                myHubGalleryViewModel.uploadImage(compressedImage)
+            } else {
+                showError(Exception(getString(R.string.message_error_compressing_image)))
+            }
+        }
     }
 
     private fun configureRecyclerView() {

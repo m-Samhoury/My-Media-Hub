@@ -2,4 +2,5 @@
     <string name="app_name">My Media Hub</string>
     <string name="action_retry">Retry</string>
     <string name="generic_error_unknown">Unknown error</string>
+    <string name="message_error_compressing_image">Invalid image</string>
 </resources>

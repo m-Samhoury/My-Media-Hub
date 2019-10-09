@@ -3,6 +3,7 @@ package com.moustafa.mymediahub.di
 import com.moustafa.mymediahub.BuildConfig
 import com.moustafa.mymediahub.features.imagegallerylistscreen.MyHubGalleryViewModel
 import com.moustafa.mymediahub.repository.Repository
+import com.moustafa.mymediahub.repository.RepositoryImp
 import com.moustafa.mymediahub.repository.network.MyMediaHubService
 import com.moustafa.mymediahub.repository.network.NetworkLayerUtils
 import org.koin.android.ext.koin.androidContext
@@ -26,7 +27,7 @@ val repositoryModule: Module = module {
                 get()
             )
     }
-    single<Repository> { Repository(get()) }
+    single<Repository> { RepositoryImp(get()) }
 }
 
 val viewModelsModule = module {

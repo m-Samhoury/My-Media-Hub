@@ -35,7 +35,7 @@ class MyHubGalleryViewModel(
         fetchGalleryImages()
     }
 
-    private fun fetchGalleryImages() {
+    internal fun fetchGalleryImages() {
         _stateLiveData.value =
             myHubGalleryState.copy(imagesStateMonitor = StateMonitor.Loading)
         viewModelScope.launch(Dispatchers.Main) {
@@ -50,13 +50,12 @@ class MyHubGalleryViewModel(
         }
     }
 
-    fun compressImageAndUpload(context: Context, imageUri: Uri) {
+    fun uploadImage(compressedBitmap: File) {
         viewModelScope.launch(Dispatchers.Main) {
             _stateLiveData.value =
                 myHubGalleryState.copy(imagesStateMonitor = StateMonitor.Loading)
 
-            val compressedBitmap = compressImageAsync(context, imageUri)
-            val response = uploadImage(compressedBitmap!!) {
+            val response = uploadImage(compressedBitmap) {
                 withContext(Dispatchers.Main) {
                     _stateLiveData.value =
                         myHubGalleryState.copy(imagesStateMonitor = StateMonitor.Failed(failed = it))
@@ -68,7 +67,7 @@ class MyHubGalleryViewModel(
         }
     }
 
-    private suspend fun compressImageAsync(
+    suspend fun compressImageAsync(
         context: Context,
         imageUri: Uri
     ): File? = withContext(Dispatchers.Default) {
