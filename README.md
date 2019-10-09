@@ -2,6 +2,9 @@
 
 #### This sample was created to showcase my skills and the latest learning in the Android Framework.
 
+**Instructions: In the gradle.properties file there is the BASE_API_URL where it includes an IP and the port that the server is running on.
+**This probably will need to be modified according to the server
+
 Some technologies:
 
 Used Glide for efficient image loading
